@@ -41,10 +41,9 @@ public class LZW {
             }
         }
 
-        System.out.println("Compressão concluída. Arquivo salvo em " + caminhoSaida);
     }
 
-    public static void descomprimir(String caminhoEntrada) throws IOException {
+   public static void descomprimir(String caminhoEntrada) throws IOException {
     File arquivoComprimido = new File(caminhoEntrada);
     if (!arquivoComprimido.exists()) {
         System.out.println("Arquivo compactado não encontrado!");
@@ -60,7 +59,7 @@ public class LZW {
 
     Map<Integer, byte[]> dicionario = new HashMap<>();
     for (int i = 0; i < 256; i++) {
-        dicionario.put(i, new byte[] {(byte) i});
+        dicionario.put(i, new byte[] { (byte) i });
     }
 
     int codigo = 256;
@@ -91,24 +90,19 @@ public class LZW {
         w = entrada;
     }
 
-    // Grava os bytes descomprimidos no arquivo original
-    try (FileOutputStream fos = new FileOutputStream(arquivoComprimido)) {
+    // Sobrescreve o conteúdo do arquivo original
+    try (FileOutputStream fos = new FileOutputStream(arquivoComprimido, false)) {
         baos.writeTo(fos);
     }
 
-    // Renomear arquivo após a gravação
+    // Renomeia de Compressao para Descompressao
     String nomeOriginal = arquivoComprimido.getName();
     String novoNome = nomeOriginal.replace("Compressao", "Descompressao");
     File novoArquivo = new File(arquivoComprimido.getParent(), novoNome);
 
-    boolean renomeado = arquivoComprimido.renameTo(novoArquivo);
-    if (renomeado) {
-        System.out.println("Arquivo renomeado para " + novoNome);
-    } else {
-        System.out.println("Não foi possível renomear o arquivo.");
-    }
+    novoArquivo.delete(); // caso já exista um arquivo com o nome novo, apaga para evitar erro
+    arquivoComprimido.renameTo(novoArquivo);
 }
-
 
 
     public static void Compressao(String CAPITULOS) throws IOException {
@@ -131,12 +125,12 @@ public class LZW {
         System.out.printf("Ganho de compressão: %.2f%%\n", ganho);
     }
 
-    public static void Descompressao(int versao) {
+    public static long Descompressao(int versao) {
         String arquivoCompactado = String.format("Compressao/capitulosLZWCompressao%d.db", versao);
         File f = new File(arquivoCompactado);
         if (!f.exists()) {
             System.out.println("Arquivo compactado não encontrado!");
-            return;
+            return -1;
         }
 
         try {
@@ -144,8 +138,11 @@ public class LZW {
             descomprimir(arquivoCompactado);
             long fim = System.currentTimeMillis();
             System.out.println("Descompressão concluída em " + (fim - inicio) + " ms");
+            return (fim - inicio) ;
+
         } catch (IOException e) {
             System.out.println("Erro na descompressão: " + e.getMessage());
+            return -1; // Valor de erro
         }
     }
 

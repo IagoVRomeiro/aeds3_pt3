@@ -8,9 +8,10 @@ public class CRUD {
     public static String IndiceArvore = "Indices/capitulosIndiceArvore.db";
     public static final String CAPITULOS = "Capitulos/capitulos.db";
 
-    public static void CRUD(TreeBplus arvore, HashEstendido hash) throws IOException {
+    public static void menu(TreeBplus arvore, HashEstendido hash) throws IOException {
+
         Scanner scanner = new Scanner(System.in);
-        
+
         while (true) {
             System.out.println("\n--- Menu CRUD Capitulo ---");
             System.out.println("1. Criar Capitulo");
@@ -62,8 +63,11 @@ public class CRUD {
                     Huffman.versaoCompressao = versao;
                     LZW.versaoCompressao = versao;
 
+
+                    System.out.println("-----------Huffman-----------");
                     Huffman.Compressao(CAPITULOS);
                     System.out.println();
+                    System.out.println("-----------LZW-----------");
                     LZW.Compressao(CAPITULOS);
 
                     AuxFuncoes.CompararCompressao(CAPITULOS, versao);
@@ -73,13 +77,18 @@ public class CRUD {
                     System.out.print("Digite a versao X da compressao para descompactar: ");
                     int versao = scanner.nextInt();
 
-                    Huffman.Descompressao(versao);
-                    LZW.Descompressao(versao);
 
-                    AuxFuncoes.CompararCompressao(CAPITULOS, versao);
+                    System.out.println("-----------Huffman-----------");
+                    long tempoHuffman = Huffman.Descompressao(versao);
+                    System.out.println();
+                    System.out.println("-----------LZW-----------");
+                    long tempoLZW = LZW.Descompressao(versao);
+
+                    AuxFuncoes.CompararDescompressao(tempoHuffman, tempoLZW);
                 }
 
                 case 8 -> {
+                    scanner.close();
                     System.out.println("Saindo...");
                     System.exit(0);
                 }
@@ -234,7 +243,7 @@ public class CRUD {
                         arvore.remover(ID); // Remove o antigo
                         arvore.inserir(ID, novaPosicao);
 
-                        hash.remover(ID);   // Remove o antigo
+                        hash.remover(ID); // Remove o antigo
                         hash.inserir(ID, novaPosicao);
                     }
 

@@ -120,42 +120,69 @@ public class AuxFuncoes {
             System.out.print("(String) Episodio: ");
             String episodio = sc.nextLine();
 
-            String[] titulos = {tituloOriginal, tituloIngles};
+            String[] titulos = { tituloOriginal, tituloIngles };
 
             return new Capitulo(id, numCapitulo, volume, nome, titulos, paginas, data, episodio);
         }
     }
 
     public static void CompararCompressao(String caminhoOriginal, int versao) throws IOException {
-    File original = new File(caminhoOriginal);
-    File huffmanFile = new File(String.format("Compressao/capitulosHuffmanCompressao%d.db", versao));
-    File lzwFile = new File(String.format("Compressao/capitulosLZWCompressao%d.db", versao));
+        File original = new File(caminhoOriginal);
+        File huffmanFile = new File(String.format("Compressao/capitulosHuffmanCompressao%d.db", versao));
+        File lzwFile = new File(String.format("Compressao/capitulosLZWCompressao%d.db", versao));
 
+        // Verifica se os arquivos de compressão existem
+        if (!huffmanFile.exists() || !lzwFile.exists()) {
+            // Se algum arquivo não existir, não faz nada
+            return;
+        }
 
-      // Verifica se os arquivos de compressão existem
-    if (!huffmanFile.exists() || !lzwFile.exists()) {
-        // Se algum arquivo não existir, não faz nada
-        return;
+        long tamanhoOriginal = original.length();
+        long tamanhoHuffman = huffmanFile.length();
+        long tamanhoLZW = lzwFile.length();
+
+        double ganhoHuffman = 100.0 * (tamanhoOriginal - tamanhoHuffman) / tamanhoOriginal;
+        double ganhoLZW = 100.0 * (tamanhoOriginal - tamanhoLZW) / tamanhoOriginal;
+
+        System.out.println("\n--- Comparação de Compressão ---");
+        System.out.printf("Huffman: %.2f%% de redução (%d bytes)\n", ganhoHuffman, tamanhoHuffman);
+        System.out.printf("LZW:     %.2f%% de redução (%d bytes)\n", ganhoLZW, tamanhoLZW);
+
+        if (ganhoHuffman > ganhoLZW) {
+            System.out.println("Huffman teve melhor compressão.");
+        } else if (ganhoHuffman < ganhoLZW) {
+            System.out.println("LZW teve melhor compressão.");
+        } else {
+            System.out.println("Ambos tiveram compressão equivalente.");
+        }
     }
-    
-    long tamanhoOriginal = original.length();
-    long tamanhoHuffman = huffmanFile.length();
-    long tamanhoLZW = lzwFile.length();
 
-    double ganhoHuffman = 100.0 * (tamanhoOriginal - tamanhoHuffman) / tamanhoOriginal;
-    double ganhoLZW = 100.0 * (tamanhoOriginal - tamanhoLZW) / tamanhoOriginal;
+    public static void CompararDescompressao(long tempoHuffman, long tempoLZW) throws IOException {
 
-    System.out.println("\n--- Comparação de Compressão ---");
-    System.out.printf("Huffman: %.2f%% de redução (%d bytes)\n", ganhoHuffman, tamanhoHuffman);
-    System.out.printf("LZW:     %.2f%% de redução (%d bytes)\n", ganhoLZW, tamanhoLZW);
-
-    if (ganhoHuffman > ganhoLZW) {
-        System.out.println("Huffman teve melhor compressão.");
-    } else if (ganhoHuffman < ganhoLZW) {
-        System.out.println("LZW teve melhor compressão.");
-    } else {
-        System.out.println("Ambos tiveram compressão equivalente.");
+        System.out.println();
+        if (tempoHuffman > tempoLZW) {
+            System.out.println("Huffman teve melhor compressão.");
+        } else if (tempoHuffman < tempoLZW) {
+            System.out.println("LZW teve melhor compressão.");
+        } else {
+            System.out.println("Ambos tiveram compressão equivalente.");
+        }
     }
-}
 
+    public static void CriarPastas() {
+
+        // Criar Pasta Compressao
+        String caminho = "Compressao";
+        File pasta = new File(caminho);
+        if (!pasta.exists()) {
+            pasta.mkdirs();
+        }
+
+        // Criar Pasta Indices
+        caminho = "Indices";
+        pasta = new File(caminho);
+        if (!pasta.exists()) {
+            pasta.mkdirs();
+        }
+    }
 }

@@ -90,37 +90,57 @@ public class Huffman {
         saida.write(conjuntoBits.toByteArray());
         saida.close();
 
-        System.out.println("Compressão concluída. Arquivo salvo em " + caminhoSaida);
     }
 
-    public static void descomprimir(String caminhoEntrada, String caminhoSaida) throws IOException, ClassNotFoundException {
-        File arquivoComprimido = new File(caminhoEntrada);
+public static void descomprimir(String caminhoEntrada)
+        throws IOException, ClassNotFoundException {
 
-        try (ObjectInputStream entrada = new ObjectInputStream(new FileInputStream(arquivoComprimido))) {
-            Map<Byte, String> codigos = (Map<Byte, String>) entrada.readObject();
-            int tamanhoBits = entrada.readInt();
-            BitSet conjuntoBits = BitSet.valueOf(entrada.readAllBytes());
+    File arquivoComprimido = new File(caminhoEntrada);
+    if (!arquivoComprimido.exists()) {
+        System.out.println("Arquivo compactado não encontrado!");
+        return;
+    }
 
-            Map<String, Byte> inverso = new HashMap<>();
-            codigos.forEach((b, codigo) -> inverso.put(codigo, b));
+    Map<Byte, String> codigos;
+    int tamanhoBits;
+    BitSet conjuntoBits;
 
-            StringBuilder codigoAtual = new StringBuilder();
-            ByteArrayOutputStream saidaBytes = new ByteArrayOutputStream();
+    try (ObjectInputStream entrada = new ObjectInputStream(new FileInputStream(arquivoComprimido))) {
+        codigos = (Map<Byte, String>) entrada.readObject();
+        tamanhoBits = entrada.readInt();
+        conjuntoBits = BitSet.valueOf(entrada.readAllBytes());
+    }
 
-            for (int i = 0; i < tamanhoBits; i++) {
-                codigoAtual.append(conjuntoBits.get(i) ? '1' : '0');
-                Byte b = inverso.get(codigoAtual.toString());
-                if (b != null) {
-                    saidaBytes.write(b);
-                    codigoAtual.setLength(0);
-                }
-            }
+    Map<String, Byte> inverso = new HashMap<>();
+    codigos.forEach((b, codigo) -> inverso.put(codigo, b));
 
-            try (FileOutputStream fos = new FileOutputStream(caminhoSaida)) {
-                fos.write(saidaBytes.toByteArray());
-            }
+    StringBuilder codigoAtual = new StringBuilder();
+    ByteArrayOutputStream saidaBytes = new ByteArrayOutputStream();
+
+    for (int i = 0; i < tamanhoBits; i++) {
+        codigoAtual.append(conjuntoBits.get(i) ? '1' : '0');
+        Byte b = inverso.get(codigoAtual.toString());
+        if (b != null) {
+            saidaBytes.write(b);
+            codigoAtual.setLength(0);
         }
     }
+
+    // Sobrescreve o arquivo original com os dados descomprimidos
+    try (FileOutputStream fos = new FileOutputStream(arquivoComprimido, false)) {
+        fos.write(saidaBytes.toByteArray());
+    }
+
+    // Renomeia arquivo de Compressao para Descompressao
+    String nomeOriginal = arquivoComprimido.getName();
+    String novoNome = nomeOriginal.replace("Compressao", "Descompressao");
+    File novoArquivo = new File(arquivoComprimido.getParent(), novoNome);
+
+    novoArquivo.delete(); // remove arquivo de destino se já existir
+    arquivoComprimido.renameTo(novoArquivo);
+}
+
+
 
     public static void Compressao(String CAPITULOS) throws IOException {
         String arquivoCompactado = String.format("Compressao/capitulosHuffmanCompressao%d.db", versaoCompressao);
@@ -142,52 +162,27 @@ public class Huffman {
         System.out.printf("Ganho de compressão: %.2f%%\n", ganho);
     }
 
-    public static void Descompressao(int versao) {
-        String arquivoCompactado = String.format("Compressao/capitulosHuffmanCompressao%d.db", versao);
+    public static long Descompressao(int versao) {
+    String arquivoCompactado = String.format("Compressao/capitulosHuffmanCompressao%d.db", versao);
 
-        File f = new File(arquivoCompactado);
-        if (!f.exists()) {
-            System.out.println("Arquivo compactado não encontrado!");
-            return;
-        }
-
-        try {
-            long inicio = System.currentTimeMillis();
-
-            // Faz a descompressão em um arquivo temporário dentro de Compressao
-            String arquivoTemporario = String.format("Compressao/tempDescompressao%d.db", versao);
-            descomprimir(arquivoCompactado, arquivoTemporario);
-
-            // Sobrescreve o arquivo compactado original com o arquivo descomprimido
-            File arquivoOriginal = new File(arquivoCompactado);
-            File arquivoTemp = new File(arquivoTemporario);
-
-            // Apaga o arquivo compactado original para renomear
-            if (!arquivoOriginal.delete()) {
-                System.out.println("Falha ao apagar o arquivo compactado original.");
-                return;
-            }
-
-            // Renomeia o temporário para o nome final de descompressão
-            String arquivoFinal = String.format("Compressao/capitulosHuffmanDescompressao%d.db", versao);
-            File arquivoDestino = new File(arquivoFinal);
-
-            if (arquivoDestino.exists()) {
-                arquivoDestino.delete();
-            }
-
-            boolean renomeado = arquivoTemp.renameTo(arquivoDestino);
-
-            long fim = System.currentTimeMillis();
-
-            if (renomeado) {
-                System.out.println("Descompressão concluída em " + (fim - inicio) + " ms");
-                System.out.println("Arquivo final: " + arquivoFinal);
-            } else {
-                System.out.println("Falha ao renomear arquivo para: " + arquivoFinal);
-            }
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Erro na descompressão: " + e.getMessage());
-        }
+    File f = new File(arquivoCompactado);
+    if (!f.exists()) {
+        System.out.println("Arquivo compactado não encontrado!");
+        return -1;
     }
+
+    try {
+        long inicio = System.currentTimeMillis();
+        descomprimir(arquivoCompactado); // Chama a nova versão sem o caminho de saída
+        long fim = System.currentTimeMillis();
+        System.out.println("Descompressão concluída em " + (fim - inicio) + " ms");
+        return (fim - inicio);
+
+    } catch (IOException | ClassNotFoundException e) {
+        System.out.println("Erro na descompressão: " + e.getMessage());
+        return -1;
+    }
+}
+
+
 }
