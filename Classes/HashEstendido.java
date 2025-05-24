@@ -1,3 +1,4 @@
+
 import java.io.*;
 import java.util.*;
 
@@ -7,7 +8,6 @@ public class HashEstendido {
     private int profundidadeGlobal;
     private List<Bucket> diretorio;
     private final String arquivoIndice = "Indices/capitulosIndiceHash.db";
-
 
     public HashEstendido() {
         this.profundidadeGlobal = 1;
@@ -21,7 +21,7 @@ public class HashEstendido {
         return id & ((1 << profundidadeGlobal) - 1);
     }
 
-    public void inserir(int id, long posicao) {
+    public void inserir(int id, long posicao) throws IOException {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
 
@@ -45,7 +45,7 @@ public class HashEstendido {
         return null;
     }
 
-    public void remover(int id) {
+    public void remover(int id) throws IOException {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
         Iterator<RegistroIndice> it = bucket.registros.iterator();
@@ -59,36 +59,34 @@ public class HashEstendido {
         }
     }
 
-   public void construirDoArquivo(String caminhoArquivo) {
-    File f = new File(arquivoIndice);
-    if (f.exists()) {
-        carregar();  // Carrega o índice existente
-        return;
-    }
-
-    try (RandomAccessFile raf = new RandomAccessFile(caminhoArquivo, "r")) {
-        raf.seek(4); // pula o cabeçalho do último ID
-        while (raf.getFilePointer() < raf.length()) {
-            long posicaoRegistro = raf.getFilePointer();
-            byte validacao = raf.readByte();
-            int tamanhoRegistro = raf.readInt();
-
-            if (validacao == 1) {
-                int id = raf.readInt(); // assume que o ID está no início do vetor
-                inserir(id, posicaoRegistro);
-            }
-
-            raf.seek(posicaoRegistro + 5 + tamanhoRegistro); // pula para o próximo
+    public void construirDoArquivo(String caminhoArquivo) {
+        File f = new File(arquivoIndice);
+        if (f.exists()) {
+            carregar();  // Carrega o índice existente
+            return;
         }
-        salvar(); // salva o índice gerado após construir
-    } catch (IOException e) {
-        System.err.println("Erro ao construir índice: " + e.getMessage());
+
+        try (RandomAccessFile raf = new RandomAccessFile(caminhoArquivo, "r")) {
+            raf.seek(4); // pula o cabeçalho do último ID
+            while (raf.getFilePointer() < raf.length()) {
+                long posicaoRegistro = raf.getFilePointer();
+                byte validacao = raf.readByte();
+                int tamanhoRegistro = raf.readInt();
+
+                if (validacao == 1) {
+                    int id = raf.readInt(); // assume que o ID está no início do vetor
+                    inserir(id, posicaoRegistro);
+                }
+
+                raf.seek(posicaoRegistro + 5 + tamanhoRegistro); // pula para o próximo
+            }
+            salvar(); // salva o índice gerado após construir
+        } catch (IOException e) {
+            System.err.println("Erro ao construir índice: " + e.getMessage());
+        }
     }
-}
 
-    
-
-    private void dividirBucket(int indice) {
+    private void dividirBucket(int indice) throws IOException {
         Bucket bucketAntigo = diretorio.get(indice);
         int novaProfundidade = bucketAntigo.profundidadeLocal + 1;
 
@@ -123,23 +121,21 @@ public class HashEstendido {
         profundidadeGlobal++;
     }
 
-    private void salvar() {
+    private void salvar() throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(arquivoIndice))) {
             oos.writeInt(profundidadeGlobal);
             oos.writeInt(diretorio.size());
             for (Bucket b : diretorio) {
                 oos.writeObject(b);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
-private void carregar() {
-    File f = new File(arquivoIndice);
-    if (!f.exists()) {
-        return; // não cria arquivo, só retorna com estado inicial
-    }
+    private void carregar() {
+        File f = new File(arquivoIndice);
+        if (!f.exists()) {
+            return; // não cria arquivo, só retorna com estado inicial
+        }
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
             profundidadeGlobal = ois.readInt();
@@ -149,13 +145,12 @@ private void carregar() {
                 diretorio.add((Bucket) ois.readObject());
             }
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
         }
     }
 
     // Classes internas
-
     static class RegistroIndice implements Serializable {
+
         int id;
         long posicao;
 
@@ -166,6 +161,7 @@ private void carregar() {
     }
 
     static class Bucket implements Serializable {
+
         int profundidadeLocal;
         List<RegistroIndice> registros;
 

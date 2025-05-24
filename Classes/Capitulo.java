@@ -1,6 +1,8 @@
+
 import java.io.*;
 
 class Capitulo {
+
     protected int id; // Identificador do capítulo
     protected Short numCapitulo; // Número do capítulo
     protected Short volume; // Volume ao qual o capítulo pertence
@@ -18,7 +20,7 @@ class Capitulo {
         this.numCapitulo = numCapitulo;
         this.volume = volume;
         this.nome = nome;
-        this.qtdString = (byte) titulos.length; 
+        this.qtdString = (byte) titulos.length;
         this.titulos = titulos;
         this.paginas = paginas;
         this.data = data;
@@ -31,7 +33,7 @@ class Capitulo {
         this.numCapitulo = -1;
         this.volume = -1;
         this.nome = "";
-        this.titulos = new String[] { "", "" }; 
+        this.titulos = new String[]{"", ""};
         this.qtdString = (byte) titulos.length;
         this.paginas = -1;
         this.data = "";
@@ -41,16 +43,15 @@ class Capitulo {
     //Ver objeto
     @Override
     public String toString() {
-        return "ID: " + id 
-                + "\n Numero do Capitulo: " + numCapitulo
-                + "\n Volume: " + volume
-                + "\n Nome: " + nome
-                + "\n TituloOriginal: " + titulos[0]
-                + "\n TituloIngles: " + titulos[1]
-                + "\n Quantidade de Titulos: " + qtdString
-                + "\n Paginas: " + paginas
-                + "\n Data: " + data
-                + "\n Episodio: " + episodio;
+        return "Numero do Capitulo: " + numCapitulo
+                + "\nVolume: " + volume
+                + "\nNome: " + nome
+                + "\nTituloOriginal: " + titulos[0]
+                + "\nTituloIngles: " + titulos[1]
+                + "\nQuantidade de Titulos: " + qtdString
+                + "\nPaginas: " + paginas
+                + "\nData: " + data
+                + "\nEpisodio: " + episodio;
     }
 
     // Método que converte o objeto em um array de bytes (serialização)
@@ -58,42 +59,39 @@ class Capitulo {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
 
-
         dos.writeInt(id);
         dos.writeShort(numCapitulo);
         dos.writeShort(volume);
         dos.writeUTF(nome);
         dos.writeByte(qtdString);
         for (String titulo : titulos) {
-            dos.writeUTF(titulo); 
+            dos.writeUTF(titulo);
         }
         dos.writeShort(paginas);
         dos.writeUTF(data);
         dos.writeUTF(episodio);
 
-        return baos.toByteArray(); 
+        return baos.toByteArray();
     }
 
     // Método que converte um array de bytes em um objeto Capitulo (desserialização)
     public void fromByteArray(byte[] data) throws IOException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        DataInputStream dis = new DataInputStream(bais);
-
-    
-        this.id = dis.readInt();
-        this.numCapitulo = dis.readShort();
-        this.volume = dis.readShort();
-        this.nome = dis.readUTF();
-        this.qtdString = dis.readByte();
-        this.titulos = new String[qtdString];
-        for (byte i = 0; i < qtdString; i++) {
-            this.titulos[i] = dis.readUTF(); 
+        DataInputStream dis;
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(data)) {
+            dis = new DataInputStream(bais);
+            this.id = dis.readInt();
+            this.numCapitulo = dis.readShort();
+            this.volume = dis.readShort();
+            this.nome = dis.readUTF();
+            this.qtdString = dis.readByte();
+            this.titulos = new String[qtdString];
+            for (byte i = 0; i < qtdString; i++) {
+                this.titulos[i] = dis.readUTF();
+            }
+            this.paginas = dis.readShort();
+            this.data = dis.readUTF();
+            this.episodio = dis.readUTF();
         }
-        this.paginas = dis.readShort();
-        this.data = dis.readUTF();
-        this.episodio = dis.readUTF();
-
-        bais.close();
         dis.close();
     }
 
@@ -152,7 +150,7 @@ class Capitulo {
 
     public void setTitulos(String[] titulos) {
         this.titulos = titulos;
-        this.qtdString = (byte) titulos.length; 
+        this.qtdString = (byte) titulos.length;
     }
 
     public void setPaginas(Short paginas) {

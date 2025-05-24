@@ -57,12 +57,11 @@ public class CRUD {
                     }
                 }
                 case 6 -> {
-                    System.out.print("Digite a versao X para salvar a compressao: ");
+                    System.out.println("Qual versão?");
                     int versao = scanner.nextInt();
 
                     Huffman.versaoCompressao = versao;
                     LZW.versaoCompressao = versao;
-
 
                     System.out.println("-----------Huffman-----------");
                     Huffman.Compressao(CAPITULOS);
@@ -70,21 +69,20 @@ public class CRUD {
                     System.out.println("-----------LZW-----------");
                     LZW.Compressao(CAPITULOS);
 
-                    AuxFuncoes.CompararCompressao(CAPITULOS, versao);
+                    AuxFuncoes.CompararCompressao(CAPITULOS, versao, Huffman.ganho, LZW.ganho, Huffman.tempoCompressao, LZW.tempoCompressao);
                 }
 
                 case 7 -> {
                     System.out.print("Digite a versao X da compressao para descompactar: ");
                     int versao = scanner.nextInt();
 
-
                     System.out.println("-----------Huffman-----------");
-                    long tempoHuffman = Huffman.Descompressao(versao);
+                    Huffman.Descompressao(versao);
                     System.out.println();
                     System.out.println("-----------LZW-----------");
-                    long tempoLZW = LZW.Descompressao(versao);
+                    LZW.Descompressao(versao);
 
-                    AuxFuncoes.CompararDescompressao(tempoHuffman, tempoLZW);
+                    AuxFuncoes.CompararDescompressao(Huffman.tempoDescompressao, LZW.tempoDescompressao);
                 }
 
                 case 8 -> {

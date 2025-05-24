@@ -1,12 +1,13 @@
+
 import java.io.*;
 import java.util.*;
 
 public class TreeBplus {
+
     public No raiz;
-    private int ordem = 5;
+    private final int ordem = 5;
 
     public TreeBplus() {
-        this.ordem = ordem;
         raiz = new No(true);
     }
 
@@ -31,28 +32,25 @@ public class TreeBplus {
         }
     }
 
-    
     public void construirArvoreDoArquivo(String caminhoArquivo) {
         String caminhoIndice = "Indices/capitulosIndiceArvore.db";
-        File indice = new File(caminhoIndice);
-    
-    
+
         try (RandomAccessFile raf = new RandomAccessFile(caminhoArquivo, "r")) {
             raf.seek(4); // Pula os 4 bytes do último ID inserido
-    
+
             while (raf.getFilePointer() < raf.length()) {
                 long posicaoRegistro = raf.getFilePointer(); // endereço do registro
-    
+
                 byte validacao = raf.readByte();
                 int tamanhoRegistro = raf.readInt();
-    
+
                 if (validacao == 1) {
                     byte[] byteArray = new byte[tamanhoRegistro];
                     raf.readFully(byteArray);
-    
+
                     Capitulo cap = new Capitulo();
                     cap.fromByteArray(byteArray);
-    
+
                     int id = cap.getId(); // ID extraído corretamente do vetor de dados
                     inserir(id, posicaoRegistro);
                 } else {
@@ -60,42 +58,34 @@ public class TreeBplus {
                     raf.skipBytes(tamanhoRegistro);
                 }
             }
-    
+
             salvarFolhasNoArquivo(caminhoIndice);
-    
+
         } catch (IOException e) {
             System.err.println("Erro ao ler o arquivo de dados: " + e.getMessage());
-            e.printStackTrace();
+
         }
     }
-    
-    
 
-    
-    
-    public void salvarFolhasNoArquivo(String caminhoIndice) {
-    File arquivo = new File(caminhoIndice);
-    if (arquivo.exists()) {
-        return; // Sai do método para não sobrescrever
-    }
+    public void salvarFolhasNoArquivo(String caminhoIndice) throws IOException {
+        File arquivo = new File(caminhoIndice);
+        if (arquivo.exists()) {
+            return; // Sai do método para não sobrescrever
+        }
 
-    try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(arquivo))) {
-        No atual = encontrarFolhaMaisEsquerda();
-        while (atual != null) {
-            ArrayList<Integer> ids = atual.getIds();
-            ArrayList<Long> enderecos = atual.getEnderecos();
-            for (int i = 0; i < ids.size(); i++) {
-                dos.writeInt(ids.get(i));
-                dos.writeLong(enderecos.get(i));
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(arquivo))) {
+            No atual = encontrarFolhaMaisEsquerda();
+            while (atual != null) {
+                ArrayList<Integer> ids = atual.getIds();
+                ArrayList<Long> enderecos = atual.getEnderecos();
+                for (int i = 0; i < ids.size(); i++) {
+                    dos.writeInt(ids.get(i));
+                    dos.writeLong(enderecos.get(i));
+                }
+                atual = atual.getPonteiroLado();
             }
-            atual = atual.getPonteiroLado();
         }
-    } catch (IOException e) {
-        System.err.println("Erro ao salvar o arquivo de índice: " + e.getMessage());
-        e.printStackTrace();
     }
-}
-
 
     private No encontrarFolhaMaisEsquerda() {
         No atual = raiz;
@@ -129,7 +119,9 @@ public class TreeBplus {
 
     private void promover(No filhoAntigo, int idPromovido, No novoFilho) {
         No pai = encontrarPai(raiz, filhoAntigo);
-        if (pai == null) return;
+        if (pai == null) {
+            return;
+        }
 
         int pos = pai.inserirId(idPromovido);
         pai.getFilhos().add(pos + 1, novoFilho);
@@ -142,9 +134,9 @@ public class TreeBplus {
     private void dividirInterno(No no) {
         int meio = (ordem - 1) / 2;
         int idPromovido = no.getIds().get(meio);
-    
+
         No novoNo = new No(false);
-    
+
         // Copiar IDs e filhos após o meio para o novo nó
         for (int i = meio + 1; i < no.getIds().size(); i++) {
             novoNo.getIds().add(no.getIds().get(i));
@@ -152,11 +144,15 @@ public class TreeBplus {
         for (int i = meio + 1; i < no.getFilhos().size(); i++) {
             novoNo.getFilhos().add(no.getFilhos().get(i));
         }
-    
+
         // Remover do nó original
-        while (no.getIds().size() > meio) no.getIds().remove(no.getIds().size() - 1);
-        while (no.getFilhos().size() > meio + 1) no.getFilhos().remove(no.getFilhos().size() - 1);
-    
+        while (no.getIds().size() > meio) {
+            no.getIds().remove(no.getIds().size() - 1);
+        }
+        while (no.getFilhos().size() > meio + 1) {
+            no.getFilhos().remove(no.getFilhos().size() - 1);
+        }
+
         if (no == raiz) {
             No novaRaiz = new No(false);
             novaRaiz.getIds().add(idPromovido);
@@ -167,15 +163,20 @@ public class TreeBplus {
             promover(no, idPromovido, novoNo);
         }
     }
-    
 
     private No encontrarPai(No noAtual, No filhoProcurado) {
-        if (noAtual.ehFolha() || noAtual.getFilhos().isEmpty()) return null;
+        if (noAtual.ehFolha() || noAtual.getFilhos().isEmpty()) {
+            return null;
+        }
 
         for (No filho : noAtual.getFilhos()) {
-            if (filho == filhoProcurado) return noAtual;
+            if (filho == filhoProcurado) {
+                return noAtual;
+            }
             No pai = encontrarPai(filho, filhoProcurado);
-            if (pai != null) return pai;
+            if (pai != null) {
+                return pai;
+            }
         }
         return null;
     }
@@ -185,18 +186,18 @@ public class TreeBplus {
         ArrayList<Integer> ids = atual.getIds();
         ArrayList<Long> enderecos = atual.getEnderecos();
         for (int i = 0; i < ids.size(); i++) {
-            if (ids.get(i) == id) return enderecos.get(i);
+            if (ids.get(i) == id) {
+                return enderecos.get(i);
+            }
         }
         return null;
     }
-    
-    
 
     public void remover(int id) {
         No folha = encontrarFolha(raiz, id);
         ArrayList<Integer> ids = folha.getIds();
         ArrayList<Long> enderecos = folha.getEnderecos();
-    
+
         for (int i = 0; i < ids.size(); i++) {
             if (ids.get(i) == id) {
                 ids.remove(i);
@@ -206,60 +207,55 @@ public class TreeBplus {
         }
     }
 
-    public void carregarFolhasDoArquivo(String caminhoIndice) {
+    public void carregarFolhasDoArquivo(String caminhoIndice) throws IOException {
+        boolean carregouAlgumaCoisa;
         try (DataInputStream dis = new DataInputStream(new FileInputStream(caminhoIndice))) {
             No anterior = null;
-            boolean carregouAlgumaCoisa = false;
-    
+            carregouAlgumaCoisa = false;
             while (dis.available() > 0) {
                 No folha = new No(true);
-    
+                
                 // Lê uma sequência de pares id/endereço
                 while (dis.available() >= 12 && folha.getIds().size() < ordem - 1) {
                     int id = dis.readInt();
                     long endereco = dis.readLong();
-    
+                    
                     folha.getIds().add(id);
                     folha.getEnderecos().add(endereco);
-    
+                    
                     System.out.println("Carregado: ID = " + id + ", Endereço = " + endereco);
                     carregouAlgumaCoisa = true;
                 }
-    
+                
                 if (folha.getIds().isEmpty()) {
                     System.out.println("Folha criada sem IDs, pulando.");
                     continue;
                 }
-    
+                
                 if (anterior == null) {
                     raiz = folha;
                 } else {
                     anterior.setPonteiroLado(folha);
                 }
-    
+                
                 anterior = folha;
             }
-    
-            if (!carregouAlgumaCoisa) {
-                System.out.println("Nenhum dado foi carregado do arquivo de índice.");
-            } else {
-                System.out.println("Folhas carregadas com sucesso.");
-            }
-    
-        } catch (IOException e) {
-            System.err.println("Erro ao carregar o índice da árvore B+: " + e.getMessage());
-            e.printStackTrace();
+        }
+
+        if (!carregouAlgumaCoisa) {
+            System.out.println("Nenhum dado foi carregado do arquivo de índice.");
+        } else {
+            System.out.println("Folhas carregadas com sucesso.");
         }
     }
-    
-    
 
     public static class No {
-        private ArrayList<Integer> ids;
-        private ArrayList<Long> enderecos;
-        private ArrayList<No> filhos;
+
+        private final ArrayList<Integer> ids;
+        private final ArrayList<Long> enderecos;
+        private final ArrayList<No> filhos;
         private No ponteiroLado;
-        private boolean folha;
+        private final boolean folha;
 
         public No(boolean folha) {
             this.folha = folha;
@@ -316,8 +312,6 @@ public class TreeBplus {
             }
             return filhos.get(i);
         }
-        
-        
 
         public int inserirId(int id) {
             for (int i = 0; i < ids.size(); i++) {
@@ -329,7 +323,6 @@ public class TreeBplus {
             ids.add(id);
             return ids.size() - 1;
         }
-        
 
         public No separaRetornaFolha(int ordem) {
             No novoNo = new No(true);
@@ -354,25 +347,28 @@ public class TreeBplus {
         public No separaRetorna(int ordem) {
             No novoNo = new No(false);
             int meio = (ordem - 1) / 2;
-        
+
             // Copiar IDs após o meio
             for (int i = meio + 1; i < ids.size(); i++) {
                 novoNo.ids.add(ids.get(i));
             }
-        
+
             // Copiar filhos após o meio
             for (int i = meio + 1; i < filhos.size(); i++) {
                 novoNo.filhos.add(filhos.get(i));
             }
-        
+
             // Remover IDs e filhos do nó original
-            while (ids.size() > meio) ids.remove(ids.size() - 1);
-            while (filhos.size() > meio + 1) filhos.remove(filhos.size() - 1);
-        
+            while (ids.size() > meio) {
+                ids.remove(ids.size() - 1);
+            }
+            while (filhos.size() > meio + 1) {
+                filhos.remove(filhos.size() - 1);
+            }
+
             return novoNo;
         }
-        
-    }
 
+    }
 
 }
