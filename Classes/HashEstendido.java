@@ -17,10 +17,12 @@ public class HashEstendido {
         carregar(); // tenta carregar do arquivo, se existir
     }
 
+    // Calcula o valor da hash usando os bits menos significativos de acordo com a profundidade global
     private int hash(int id) {
         return id & ((1 << profundidadeGlobal) - 1);
     }
 
+    // Insere um novo par (id, posição) no bucket correspondente; divide o bucket se estiver cheio
     public void inserir(int id, long posicao) throws IOException {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
@@ -34,6 +36,7 @@ public class HashEstendido {
         salvar();
     }
 
+    // Busca o id no bucket correspondente e retorna a posição no arquivo, se encontrado
     public Long buscar(int id) {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
@@ -45,6 +48,7 @@ public class HashEstendido {
         return null;
     }
 
+    // Remove o id do bucket correspondente e salva o estado atualizado do índice
     public void remover(int id) throws IOException {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
@@ -59,6 +63,7 @@ public class HashEstendido {
         }
     }
 
+    // Constrói o índice de hash lendo registros válidos de um arquivo binário existente
     public void construirDoArquivo(String caminhoArquivo) {
         File f = new File(arquivoIndice);
         if (f.exists()) {
@@ -86,6 +91,7 @@ public class HashEstendido {
         }
     }
 
+    // Constrói o índice de hash lendo registros válidos de um arquivo binário existente
     private void dividirBucket(int indice) throws IOException {
         Bucket bucketAntigo = diretorio.get(indice);
         int novaProfundidade = bucketAntigo.profundidadeLocal + 1;
@@ -113,6 +119,7 @@ public class HashEstendido {
         }
     }
 
+    // Duplica o diretório e incrementa a profundidade global quando um bucket precisa de mais bits
     private void duplicarDiretorio() {
         int tam = diretorio.size();
         for (int i = 0; i < tam; i++) {
@@ -121,6 +128,7 @@ public class HashEstendido {
         profundidadeGlobal++;
     }
 
+    // Serializa e salva o estado atual do índice (diretório e buckets) no disco
     private void salvar() throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(arquivoIndice))) {
             oos.writeInt(profundidadeGlobal);
@@ -131,6 +139,7 @@ public class HashEstendido {
         }
     }
 
+    // Carrega o estado salvo do índice a partir do disco, se o arquivo existir
     private void carregar() {
         File f = new File(arquivoIndice);
         if (!f.exists()) {
@@ -165,15 +174,18 @@ public class HashEstendido {
         int profundidadeLocal;
         List<RegistroIndice> registros;
 
+        // Representa um bucket que armazena múltiplos registros e sua profundidade local
         public Bucket(int profundidade) {
             this.profundidadeLocal = profundidade;
             this.registros = new ArrayList<>();
         }
 
+        // Retorna verdadeiro se o número de registros atingiu o limite do bucket
         public boolean estaCheio() {
             return registros.size() >= TAM_BUCKET;
         }
 
+        // Adiciona um novo registro ao bucket
         public void adicionar(RegistroIndice r) {
             registros.add(r);
         }

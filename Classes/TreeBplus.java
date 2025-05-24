@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.util.*;
 
@@ -7,14 +6,17 @@ public class TreeBplus {
     public No raiz;
     private final int ordem = 5;
 
+    // Construtor: inicializa a árvore com um nó raiz do tipo folha
     public TreeBplus() {
         raiz = new No(true);
     }
 
+    // Retorna a raiz da árvore B+
     public No getRaiz() {
         return raiz;
     }
 
+    // Insere um par ID/endereço na folha correta, dividindo a folha se necessário
     public void inserir(int id, long endereco) {
         No folha = encontrarFolha(raiz, id);
         folha.inserirIdEnderecoOrdenado(id, endereco);
@@ -24,6 +26,7 @@ public class TreeBplus {
         }
     }
 
+    // Imprime os IDs de todas as folhas da árvore da esquerda para a direita
     public void imprimirFolhas() {
         No atual = encontrarFolhaMaisEsquerda();
         while (atual != null) {
@@ -32,6 +35,7 @@ public class TreeBplus {
         }
     }
 
+    // Lê registros válidos de um arquivo binário e os insere na árvore B+
     public void construirArvoreDoArquivo(String caminhoArquivo) {
         String caminhoIndice = "Indices/capitulosIndiceArvore.db";
 
@@ -67,6 +71,7 @@ public class TreeBplus {
         }
     }
 
+    // Salva os IDs e endereços das folhas da árvore em um arquivo de índice
     public void salvarFolhasNoArquivo(String caminhoIndice) throws IOException {
         File arquivo = new File(caminhoIndice);
         if (arquivo.exists()) {
@@ -87,6 +92,7 @@ public class TreeBplus {
         }
     }
 
+    // Retorna a folha mais à esquerda da árvore (usada para percorrer folhas)
     private No encontrarFolhaMaisEsquerda() {
         No atual = raiz;
         while (!atual.ehFolha()) {
@@ -95,6 +101,7 @@ public class TreeBplus {
         return atual;
     }
 
+    // Navega pela árvore até encontrar a folha correta para um ID
     private No encontrarFolha(No noAtual, int id) {
         while (!noAtual.ehFolha()) {
             noAtual = noAtual.proximoNo(id);
@@ -102,6 +109,7 @@ public class TreeBplus {
         return noAtual;
     }
 
+    // Divide uma folha que sofreu overflow e promove o menor ID da nova folha
     private void dividirFolha(No folha) {
         No novoNo = folha.separaRetornaFolha(ordem);
         int idPromovido = novoNo.getIds().get(0);
@@ -117,6 +125,7 @@ public class TreeBplus {
         }
     }
 
+    // Promove um ID para o nó pai e ajusta os ponteiros dos filhos
     private void promover(No filhoAntigo, int idPromovido, No novoFilho) {
         No pai = encontrarPai(raiz, filhoAntigo);
         if (pai == null) {
@@ -131,6 +140,7 @@ public class TreeBplus {
         }
     }
 
+    // Divide um nó interno com overflow e promove o ID do meio
     private void dividirInterno(No no) {
         int meio = (ordem - 1) / 2;
         int idPromovido = no.getIds().get(meio);
@@ -164,6 +174,7 @@ public class TreeBplus {
         }
     }
 
+    // Busca o nó pai de um dado nó filho na árvore
     private No encontrarPai(No noAtual, No filhoProcurado) {
         if (noAtual.ehFolha() || noAtual.getFilhos().isEmpty()) {
             return null;
@@ -181,6 +192,7 @@ public class TreeBplus {
         return null;
     }
 
+    // Retorna o endereço associado a um ID, se existir
     public Long buscar(int id) {
         No atual = encontrarFolha(raiz, id); // usa o caminho correto pelos nós internos
         ArrayList<Integer> ids = atual.getIds();
@@ -193,6 +205,7 @@ public class TreeBplus {
         return null;
     }
 
+    // Remove um ID e seu endereço da folha correspondente (sem rebalanceamento)
     public void remover(int id) {
         No folha = encontrarFolha(raiz, id);
         ArrayList<Integer> ids = folha.getIds();
@@ -207,6 +220,7 @@ public class TreeBplus {
         }
     }
 
+    // Carrega os pares ID/endereço de um arquivo e recria as folhas da árvore
     public void carregarFolhasDoArquivo(String caminhoIndice) throws IOException {
         boolean carregouAlgumaCoisa;
         try (DataInputStream dis = new DataInputStream(new FileInputStream(caminhoIndice))) {
@@ -214,30 +228,30 @@ public class TreeBplus {
             carregouAlgumaCoisa = false;
             while (dis.available() > 0) {
                 No folha = new No(true);
-                
+
                 // Lê uma sequência de pares id/endereço
                 while (dis.available() >= 12 && folha.getIds().size() < ordem - 1) {
                     int id = dis.readInt();
                     long endereco = dis.readLong();
-                    
+
                     folha.getIds().add(id);
                     folha.getEnderecos().add(endereco);
-                    
+
                     System.out.println("Carregado: ID = " + id + ", Endereço = " + endereco);
                     carregouAlgumaCoisa = true;
                 }
-                
+
                 if (folha.getIds().isEmpty()) {
                     System.out.println("Folha criada sem IDs, pulando.");
                     continue;
                 }
-                
+
                 if (anterior == null) {
                     raiz = folha;
                 } else {
                     anterior.setPonteiroLado(folha);
                 }
-                
+
                 anterior = folha;
             }
         }
@@ -257,6 +271,7 @@ public class TreeBplus {
         private No ponteiroLado;
         private final boolean folha;
 
+        // Inicializa um nó, que pode ser folha ou interno
         public No(boolean folha) {
             this.folha = folha;
             ids = new ArrayList<>();
@@ -265,34 +280,42 @@ public class TreeBplus {
             ponteiroLado = null;
         }
 
+        // Verifica se o nó é folha
         public boolean ehFolha() {
             return folha;
         }
 
+        // Verifica se o número de IDs excede o limite permitido
         public boolean verificaOverflow(int ordem) {
             return ids.size() >= ordem;
         }
 
+        // Retorna a lista de IDs armazenados no nó
         public ArrayList<Integer> getIds() {
             return ids;
         }
 
+        // Retorna a lista de endereços associados aos IDs (usado em folhas)
         public ArrayList<Long> getEnderecos() {
             return enderecos;
         }
 
+        // Retorna a lista de nós filhos (usado em nós internos)
         public ArrayList<No> getFilhos() {
             return filhos;
         }
 
+        // Retorna o ponteiro para o próximo nó folha (usado para varredura sequencial)
         public No getPonteiroLado() {
             return ponteiroLado;
         }
 
+        // Define o ponteiro para o próximo nó folha na sequência
         public void setPonteiroLado(No ponteiro) {
             this.ponteiroLado = ponteiro;
         }
 
+        // Insere um par ID/endereço na ordem correta dentro do nó folha
         public void inserirIdEnderecoOrdenado(int id, long endereco) {
             for (int i = 0; i < ids.size(); i++) {
                 if (id < ids.get(i)) {
@@ -305,6 +328,7 @@ public class TreeBplus {
             enderecos.add(endereco);
         }
 
+        // Retorna o próximo nó filho com base no ID
         public No proximoNo(int id) {
             int i = 0;
             while (i < ids.size() && id >= ids.get(i)) {
@@ -313,6 +337,7 @@ public class TreeBplus {
             return filhos.get(i);
         }
 
+        // Insere um ID em ordem crescente no nó interno e retorna a posição
         public int inserirId(int id) {
             for (int i = 0; i < ids.size(); i++) {
                 if (id < ids.get(i)) {
@@ -324,6 +349,7 @@ public class TreeBplus {
             return ids.size() - 1;
         }
 
+        // Divide um nó folha em dois e retorna o novo nó folha criado
         public No separaRetornaFolha(int ordem) {
             No novoNo = new No(true);
             int meio = (ordem + 1) / 2;
@@ -344,6 +370,7 @@ public class TreeBplus {
             return novoNo;
         }
 
+        // Divide um nó interno em dois e retorna o novo nó criado
         public No separaRetorna(int ordem) {
             No novoNo = new No(false);
             int meio = (ordem - 1) / 2;

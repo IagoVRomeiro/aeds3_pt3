@@ -9,6 +9,7 @@ public class Huffman {
     public static long tempoDescompressao = 0;
     public static double ganho = 0;
 
+    // Classe auxiliar que representa um nó da árvore de Huffman
     static class NoHuffman implements Comparable<NoHuffman> {
 
         byte valor;
@@ -37,12 +38,14 @@ public class Huffman {
         }
     }
 
+    // Gera um mapa de códigos Huffman para cada byte, a partir da árvore
     private static Map<Byte, String> gerarCodigos(NoHuffman raiz) {
         Map<Byte, String> codigos = new HashMap<>();
         gerarCodigos(raiz, "", codigos);
         return codigos;
     }
 
+    // Função recursiva que preenche o mapa de códigos Huffman com base na árvore
     private static void gerarCodigos(NoHuffman no, String codigo, Map<Byte, String> mapa) {
         if (no.ehFolha()) {
             mapa.put(no.valor, codigo);
@@ -52,6 +55,7 @@ public class Huffman {
         gerarCodigos(no.direita, codigo + "1", mapa);
     }
 
+    // Método que comprime um arquivo usando o algoritmo de Huffman
     public static void comprimir(String caminhoEntrada, String caminhoSaida) throws IOException {
         byte[] dados;
         try (FileInputStream leitor = new FileInputStream(caminhoEntrada)) {
@@ -97,6 +101,7 @@ public class Huffman {
 
     }
 
+    // Método que descomprime um arquivo previamente comprimido com Huffman
     public static void descomprimir(String caminhoEntrada)
             throws IOException, ClassNotFoundException {
 
@@ -145,6 +150,7 @@ public class Huffman {
         arquivoComprimido.renameTo(novoArquivo);
     }
 
+    // Método que executa o processo completo de compressão e exibe tempo e estatísticas
     public static void Compressao(String CAPITULOS) throws IOException {
         String arquivoCompactado = String.format("Compressao/capitulosHuffmanCompressao%d.db", versaoCompressao);
 
@@ -165,6 +171,7 @@ public class Huffman {
         System.out.printf("Ganho de compressão: %.2f%%\n", ganho);
     }
 
+    // Método que executa a descompressão completa de um arquivo compactado por Huffman
     public static void Descompressao(int versao) {
         String arquivoCompactado = String.format("Compressao/capitulosHuffmanCompressao%d.db", versao);
 

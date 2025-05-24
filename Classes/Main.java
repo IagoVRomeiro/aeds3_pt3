@@ -4,13 +4,14 @@ import java.text.ParseException;
 
 public class Main {
 
-    static String CAPITULOS = "Capitulos/capitulos.db";
+    public static final String CAPITULOS = "Capitulos/capitulos.db";
+
     public static void main(String[] args) throws ParseException, IOException {
 
-        //
+        //Cria as pastas Indices e Compressao
         AuxFuncoes.CriarPastas();
 
-        // Gerar os arquivos capitulos.db e capitulosIndice.db
+        // Gerar os arquivos capitulos.db
         CriadorCapitulos.gerarCapitulos();
 
         //Construir a árvore B+ e Hash
