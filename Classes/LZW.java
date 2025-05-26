@@ -9,7 +9,7 @@ public class LZW {
     public static long tempoDescompressao = 0;
     public static double ganho = 0;
 
-    // Método que realiza a compressão de um arquivo usando o algoritmo LZW
+    // Realiza a compressão de um arquivo usando o algoritmo LZW
     public static void comprimir(String caminhoEntrada, String caminhoSaida) throws IOException {
         byte[] entrada;
         try (FileInputStream fis = new FileInputStream(caminhoEntrada)) {
@@ -49,7 +49,7 @@ public class LZW {
 
     }
 
-    // Método que realiza a descompressão de um arquivo compactado com LZW
+    // Realiza a descompressão de um arquivo compactado com LZW
     public static void descomprimir(String caminhoEntrada) throws IOException {
         File arquivoComprimido = new File(caminhoEntrada);
         if (!arquivoComprimido.exists()) {
@@ -111,8 +111,8 @@ public class LZW {
         arquivoComprimido.renameTo(novoArquivo);
     }
 
-    // Método que executa o processo completo de compressão, calcula métricas e exibe os resultados
-    public static void Compressao(String CAPITULOS) throws IOException {
+    // Executa o processo completo de compressão, calcula métricas e exibe os resultados
+    public static void ExecutarCompressao(String CAPITULOS) throws IOException {
         String arquivoCompactado = String.format("Compressao/capitulosLZWCompressao%d.db", versaoCompressao);
 
         long inicio = System.currentTimeMillis();
@@ -132,14 +132,9 @@ public class LZW {
         System.out.printf("Ganho de compressão: %.2f%%\n", ganho);
     }
 
-    // Método que executa o processo de descompressão a partir de um arquivo compactado, medindo o tempo de execução
-    public static void Descompressao(int versao) {
+    // Executa o processo de descompressão a partir de um arquivo compactado, medindo o tempo de execução
+    public static void ExecutarDescompressao(int versao) {
         String arquivoCompactado = String.format("Compressao/capitulosLZWCompressao%d.db", versao);
-        File f = new File(arquivoCompactado);
-        if (!f.exists()) {
-            System.out.println("Arquivo compactado não encontrado!");
-
-        }
 
         try {
             long inicio = System.currentTimeMillis();

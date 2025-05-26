@@ -1,42 +1,50 @@
-
 import java.io.*;
 import java.util.*;
 
 public class HashEstendido {
 
     private static final int TAM_BUCKET = 4;
-    private int profundidadeGlobal;
-    private List<Bucket> diretorio;
-    private final String arquivoIndice = "Indices/capitulosIndiceHash.db";
+    private int profundidadeGlobal; 
+    private List<Bucket> diretorio; 
+    private final String arquivoIndice = "Indices/capitulosIndiceHash.db"; 
+    private boolean emConstrucao = false; 
 
+    // inicializa a hash com profundidade 1 e carrega dados do arquivo
     public HashEstendido() {
         this.profundidadeGlobal = 1;
         this.diretorio = new ArrayList<>();
         diretorio.add(new Bucket(1));
         diretorio.add(new Bucket(1));
-        carregar(); // tenta carregar do arquivo, se existir
+        carregar();
     }
 
-    // Calcula o valor da hash usando os bits menos significativos de acordo com a profundidade global
+    // Calcula o hash aplicando máscara conforme a profundidade global
     private int hash(int id) {
         return id & ((1 << profundidadeGlobal) - 1);
     }
 
-    // Insere um novo par (id, posição) no bucket correspondente; divide o bucket se estiver cheio
-    public void inserir(int id, long posicao) throws IOException {
+    // Insere um novo registro na hash, dividindo bucket se necessário
+    public void inserir(int id, long posicao) {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
 
         if (!bucket.estaCheio()) {
             bucket.adicionar(new RegistroIndice(id, posicao));
         } else {
-            dividirBucket(h);
-            inserir(id, posicao); // tenta de novo após dividir
+            try {
+                dividirBucket(h);
+                inserir(id, posicao);
+            } catch (IOException e) {
+                System.err.println("Erro ao dividir bucket: " + e.getMessage());
+            }
         }
-        salvar();
+
+        if (!emConstrucao) {
+            salvar(); 
+        }
     }
 
-    // Busca o id no bucket correspondente e retorna a posição no arquivo, se encontrado
+    // Busca pela posição de um registro com o id fornecido
     public Long buscar(int id) {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
@@ -48,50 +56,47 @@ public class HashEstendido {
         return null;
     }
 
-    // Remove o id do bucket correspondente e salva o estado atualizado do índice
-    public void remover(int id) throws IOException {
+    // Remove um registro do bucket correspondente ao id
+    public void remover(int id) {
         int h = hash(id);
         Bucket bucket = diretorio.get(h);
-        Iterator<RegistroIndice> it = bucket.registros.iterator();
-        while (it.hasNext()) {
-            RegistroIndice r = it.next();
-            if (r.id == id) {
-                it.remove();
-                salvar();
-                return;
-            }
-        }
+        bucket.registros.removeIf(r -> r.id == id);
+        salvar();
     }
 
-    // Constrói o índice de hash lendo registros válidos de um arquivo binário existente
-    public void construirDoArquivo(String caminhoArquivo) {
+    // Constrói o índice
+    public void construirHashDoArquivo(String caminhoArquivo) {
         File f = new File(arquivoIndice);
         if (f.exists()) {
-            carregar();  // Carrega o índice existente
+            carregar();
             return;
         }
 
+        emConstrucao = true;
+
         try (RandomAccessFile raf = new RandomAccessFile(caminhoArquivo, "r")) {
-            raf.seek(4); // pula o cabeçalho do último ID
+            raf.seek(4);
             while (raf.getFilePointer() < raf.length()) {
                 long posicaoRegistro = raf.getFilePointer();
                 byte validacao = raf.readByte();
                 int tamanhoRegistro = raf.readInt();
 
                 if (validacao == 1) {
-                    int id = raf.readInt(); // assume que o ID está no início do vetor
+                    int id = raf.readInt();
                     inserir(id, posicaoRegistro);
                 }
 
-                raf.seek(posicaoRegistro + 5 + tamanhoRegistro); // pula para o próximo
+                raf.seek(posicaoRegistro + 5 + tamanhoRegistro);
             }
-            salvar(); // salva o índice gerado após construir
+            salvar();
         } catch (IOException e) {
             System.err.println("Erro ao construir índice: " + e.getMessage());
         }
+
+        emConstrucao = false;
     }
 
-    // Constrói o índice de hash lendo registros válidos de um arquivo binário existente
+    // Divide um bucket que está cheio e redistribui seus registros
     private void dividirBucket(int indice) throws IOException {
         Bucket bucketAntigo = diretorio.get(indice);
         int novaProfundidade = bucketAntigo.profundidadeLocal + 1;
@@ -101,10 +106,9 @@ public class HashEstendido {
         }
 
         Bucket novoBucket = new Bucket(novaProfundidade);
-        bucketAntigo.profundidadeLocal = novaProfundidade;
-
         List<RegistroIndice> antigos = new ArrayList<>(bucketAntigo.registros);
         bucketAntigo.registros.clear();
+        bucketAntigo.profundidadeLocal = novaProfundidade;
 
         for (int i = 0; i < diretorio.size(); i++) {
             if (diretorio.get(i) == bucketAntigo) {
@@ -115,11 +119,18 @@ public class HashEstendido {
         }
 
         for (RegistroIndice r : antigos) {
-            inserir(r.id, r.posicao);
+            inserirDireto(r);
         }
     }
 
-    // Duplica o diretório e incrementa a profundidade global quando um bucket precisa de mais bits
+    // Insere diretamente um registro no bucket sem reprocessar
+    private void inserirDireto(RegistroIndice r) {
+        int h = hash(r.id);
+        Bucket bucket = diretorio.get(h);
+        bucket.adicionar(r);
+    }
+
+    // Duplica o tamanho do diretório, aumentando a profundidade global
     private void duplicarDiretorio() {
         int tam = diretorio.size();
         for (int i = 0; i < tam; i++) {
@@ -128,23 +139,23 @@ public class HashEstendido {
         profundidadeGlobal++;
     }
 
-    // Serializa e salva o estado atual do índice (diretório e buckets) no disco
-    private void salvar() throws IOException {
+    // Salva o índice completo (diretório e buckets) em arquivo
+    private void salvar() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(arquivoIndice))) {
             oos.writeInt(profundidadeGlobal);
             oos.writeInt(diretorio.size());
             for (Bucket b : diretorio) {
                 oos.writeObject(b);
             }
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar índice: " + e.getMessage());
         }
     }
 
-    // Carrega o estado salvo do índice a partir do disco, se o arquivo existir
+    // Carrega o índice do arquivo serializado, se existir
     private void carregar() {
         File f = new File(arquivoIndice);
-        if (!f.exists()) {
-            return; // não cria arquivo, só retorna com estado inicial
-        }
+        if (!f.exists()) return;
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
             profundidadeGlobal = ois.readInt();
@@ -154,12 +165,12 @@ public class HashEstendido {
                 diretorio.add((Bucket) ois.readObject());
             }
         } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Erro ao carregar índice: " + e.getMessage());
         }
     }
 
-    // Classes internas
+    // Classe auxiliar para representar um par (id, posição) no índice
     static class RegistroIndice implements Serializable {
-
         int id;
         long posicao;
 
@@ -169,23 +180,22 @@ public class HashEstendido {
         }
     }
 
+    // Classe que representa um bucket com profundidade local e lista de registros
     static class Bucket implements Serializable {
-
         int profundidadeLocal;
         List<RegistroIndice> registros;
 
-        // Representa um bucket que armazena múltiplos registros e sua profundidade local
         public Bucket(int profundidade) {
             this.profundidadeLocal = profundidade;
             this.registros = new ArrayList<>();
         }
 
-        // Retorna verdadeiro se o número de registros atingiu o limite do bucket
+        // Verifica se o bucket está cheio
         public boolean estaCheio() {
             return registros.size() >= TAM_BUCKET;
         }
 
-        // Adiciona um novo registro ao bucket
+        // Adiciona um registro ao bucket
         public void adicionar(RegistroIndice r) {
             registros.add(r);
         }

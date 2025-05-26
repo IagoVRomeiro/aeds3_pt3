@@ -9,7 +9,7 @@ public class Main {
     public static void main(String[] args) throws ParseException, IOException {
 
         //Cria as pastas Indices e Compressao
-        AuxFuncoes.CriarPastas();
+        Funcoes.CriarPastas();
 
         // Gerar os arquivos capitulos.db
         CriadorCapitulos.gerarCapitulos();
@@ -19,7 +19,7 @@ public class Main {
         arvore.construirArvoreDoArquivo(CAPITULOS);
 
         HashEstendido hash = new HashEstendido();
-        hash.construirDoArquivo(CAPITULOS);
+        hash.construirHashDoArquivo(CAPITULOS);
 
         // Iniciar o menu
         CRUD.menu(arvore, hash);

@@ -55,10 +55,9 @@ public class TreeBplus {
                     Capitulo cap = new Capitulo();
                     cap.fromByteArray(byteArray);
 
-                    int id = cap.getId(); // ID extraído corretamente do vetor de dados
+                    int id = cap.getId(); 
                     inserir(id, posicaoRegistro);
                 } else {
-                    // Pula o vetor inválido
                     raf.skipBytes(tamanhoRegistro);
                 }
             }
@@ -71,11 +70,11 @@ public class TreeBplus {
         }
     }
 
-    // Salva os IDs e endereços das folhas da árvore em um arquivo de índice
+    // Salva os IDs e endereços das folhas da árvore no arquivo de índice
     public void salvarFolhasNoArquivo(String caminhoIndice) throws IOException {
         File arquivo = new File(caminhoIndice);
         if (arquivo.exists()) {
-            return; // Sai do método para não sobrescrever
+            return; 
         }
 
         try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(arquivo))) {
@@ -92,7 +91,7 @@ public class TreeBplus {
         }
     }
 
-    // Retorna a folha mais à esquerda da árvore (usada para percorrer folhas)
+    // Retorna a folha mais à esquerda da árvore, usada para percorrer folhas
     private No encontrarFolhaMaisEsquerda() {
         No atual = raiz;
         while (!atual.ehFolha()) {
@@ -192,7 +191,7 @@ public class TreeBplus {
         return null;
     }
 
-    // Retorna o endereço associado a um ID, se existir
+    // Retorna o endereço associado a um ID
     public Long buscar(int id) {
         No atual = encontrarFolha(raiz, id); // usa o caminho correto pelos nós internos
         ArrayList<Integer> ids = atual.getIds();
@@ -205,7 +204,7 @@ public class TreeBplus {
         return null;
     }
 
-    // Remove um ID e seu endereço da folha correspondente (sem rebalanceamento)
+    // Remove um ID e seu endereço da folha
     public void remover(int id) {
         No folha = encontrarFolha(raiz, id);
         ArrayList<Integer> ids = folha.getIds();

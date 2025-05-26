@@ -45,7 +45,7 @@ public class Huffman {
         return codigos;
     }
 
-    // Função recursiva que preenche o mapa de códigos Huffman com base na árvore
+    // Função recursiva que preenche o mapa de códigos com base na árvore
     private static void gerarCodigos(NoHuffman no, String codigo, Map<Byte, String> mapa) {
         if (no.ehFolha()) {
             mapa.put(no.valor, codigo);
@@ -55,7 +55,7 @@ public class Huffman {
         gerarCodigos(no.direita, codigo + "1", mapa);
     }
 
-    // Método que comprime um arquivo usando o algoritmo de Huffman
+    // Comprime um arquivo usando o algoritmo de Huffman
     public static void comprimir(String caminhoEntrada, String caminhoSaida) throws IOException {
         byte[] dados;
         try (FileInputStream leitor = new FileInputStream(caminhoEntrada)) {
@@ -101,7 +101,7 @@ public class Huffman {
 
     }
 
-    // Método que descomprime um arquivo previamente comprimido com Huffman
+    // Descomprime um arquivo previamente comprimido com Huffman
     public static void descomprimir(String caminhoEntrada)
             throws IOException, ClassNotFoundException {
 
@@ -150,8 +150,8 @@ public class Huffman {
         arquivoComprimido.renameTo(novoArquivo);
     }
 
-    // Método que executa o processo completo de compressão e exibe tempo e estatísticas
-    public static void Compressao(String CAPITULOS) throws IOException {
+    // Executa o processo completo de compressão e exibe tempo e estatísticas
+    public static void ExecutarCompressao(String CAPITULOS) throws IOException {
         String arquivoCompactado = String.format("Compressao/capitulosHuffmanCompressao%d.db", versaoCompressao);
 
         long inicio = System.currentTimeMillis();
@@ -171,19 +171,13 @@ public class Huffman {
         System.out.printf("Ganho de compressão: %.2f%%\n", ganho);
     }
 
-    // Método que executa a descompressão completa de um arquivo compactado por Huffman
-    public static void Descompressao(int versao) {
+    // Descompressão completa de um arquivo compactado
+    public static void ExecutarDescompressao(int versao) {
         String arquivoCompactado = String.format("Compressao/capitulosHuffmanCompressao%d.db", versao);
-
-        File f = new File(arquivoCompactado);
-        if (!f.exists()) {
-            System.out.println("Arquivo compactado não encontrado!");
-
-        }
 
         try {
             long inicio = System.currentTimeMillis();
-            descomprimir(arquivoCompactado); // Chama a nova versão sem o caminho de saída
+            descomprimir(arquivoCompactado);
             long fim = System.currentTimeMillis();
             tempoDescompressao = (fim - inicio);
 

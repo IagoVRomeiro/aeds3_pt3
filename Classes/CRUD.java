@@ -1,14 +1,11 @@
 
-import java.io.*;
-import java.util.Scanner;
+import java.io.IOException;
 
 public class CRUD {
 
     public static final String CAPITULOS = "Capitulos/capitulos.db";
 
     public static void menu(TreeBplus arvore, HashEstendido hash) throws IOException {
-
-        Scanner scanner = new Scanner(System.in);
 
         while (true) {
             System.out.println("\n--- Menu CRUD Capitulo ---");
@@ -20,78 +17,47 @@ public class CRUD {
             System.out.println("6. Compactar base de dados");
             System.out.println("7. Descompactar base de dados");
             System.out.println("8. Sair");
-
             System.out.print("Escolha uma opcao: ");
-            int opcao = scanner.nextInt();
+
+            int opcao = Funcoes.lerIntValido();
 
             switch (opcao) {
                 case 1 -> {
-                    if (AuxFuncoes.criarCapitulo(AuxFuncoes.InstanciaCapitulo(), arvore, hash)) {
-                        System.out.println("Criado com sucesso");
-                    } else {
-                        System.out.println("Falhou na criacao");
-                    }
+                    // Cria um novo capítulo e insere nas estruturas.
+                    FuncoesCRUD.Criar(Funcoes.InstanciaCapitulo(), arvore, hash);
                 }
                 case 2 -> {
-                    if (!AuxFuncoes.lerCapitulo(AuxFuncoes.qualID(), arvore, hash)) {
-                        System.out.println("Nao encontrado");
-                    }
+                    // Lê e exibe um capítulo a partir do ID informado.
+                    FuncoesCRUD.Ler(Funcoes.qualID(), arvore, hash);
                 }
                 case 3 ->
-                    AuxFuncoes.lerCapitulos(AuxFuncoes.PerguntaQTD_ID(), arvore, hash);
-
+                    // Lê e exibe vários capítulos a partir de um vetor de IDs.
+                    FuncoesCRUD.LerMais(Funcoes.PerguntaVetorID(), arvore, hash);
                 case 4 -> {
-                    if (AuxFuncoes.atualizarCapitulo(AuxFuncoes.qualID(), arvore, hash)) {
-                        System.out.println("Atualizado com sucesso");
-                    } else {
-                        System.out.println("Falhou na atualizacao");
-                    }
+                    // Atualiza os dados de um capítulo com base no ID.
+                    FuncoesCRUD.Atualizar(Funcoes.qualID(), arvore, hash);
                 }
                 case 5 -> {
-                    if (AuxFuncoes.deletarCapitulo(AuxFuncoes.qualID(), arvore, hash)) {
-                        System.out.println("Excluido com sucesso");
-                    } else {
-                        System.out.println("Falhou na exclusao");
-                    }
+                    // Remove um capítulo da base de dados com base no ID.
+                    FuncoesCRUD.Deletar(Funcoes.qualID(), arvore, hash);
                 }
-                case 6 -> {
-                    System.out.println("Qual versão?");
-                    int versao = scanner.nextInt();
-
-                    Huffman.versaoCompressao = versao;
-                    LZW.versaoCompressao = versao;
-
-                    System.out.println("\n-----------Huffman-----------");
-                    Huffman.Compressao(CAPITULOS);
-
-                    System.out.println("\n-----------LZW-----------");
-                    LZW.Compressao(CAPITULOS);
-
-                    AuxFuncoes.CompararCompressao(CAPITULOS, versao, Huffman.ganho, LZW.ganho, Huffman.tempoCompressao, LZW.tempoCompressao);
-                }
-
-                case 7 -> {
-                    System.out.print("Digite a versao X da compressao para descompactar: ");
-                    int versao = scanner.nextInt();
-
-                    System.out.println("-----------Huffman-----------");
-                    Huffman.Descompressao(versao);
-
-                    System.out.println("\n-----------LZW-----------");
-                    LZW.Descompressao(versao);
-
-                    AuxFuncoes.CompararDescompressao(Huffman.tempoDescompressao, LZW.tempoDescompressao);
-                }
-
+                case 6 ->
+                    // Executa compressão dos dados com Huffman e LZW.
+                    FuncoesCRUD.Compressao();
+                case 7 ->
+                    // Executa descompressão dos dados com Huffman e LZW.
+                    FuncoesCRUD.Descompressao();
                 case 8 -> {
-                    scanner.close();
+                    // Encerra o programa.
                     System.out.println("Saindo...");
-                    System.exit(0);
+                    return;
                 }
                 default ->
+                    // Trata opção inválida digitada pelo usuário.
                     System.out.println("Opção inválida. Tente novamente.");
             }
-        }
-    }
 
+        }
+
+    }
 }
